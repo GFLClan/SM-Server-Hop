@@ -182,7 +182,7 @@ stock void Forwards()
 
 stock void ForwardConVars() 
 {	
-	g_hAdvertInterval = CreateConVar("sm_GFLSH_advert_interval", "65.0", "Every x seconds display a server advertisement.");
+	g_hAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
 	HookConVarChange(g_hAdvertInterval, CVarChanged);
 	
 	g_hGameID = CreateConVar("sm_gflsh_gameid", "4", "The Game ID of the servers you want to retrieve in the database. 0 = All");
