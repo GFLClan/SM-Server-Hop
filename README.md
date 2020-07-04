@@ -26,4 +26,5 @@ GFL's Server Hop plugin that allows players to view and connect to other game se
 
 ## Credits
 * [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator
-* [GRAVE] rig0r - Socket code from one of the original Server Hop plugins released on AlliedMods.
+* [rig0r](https://forums.alliedmods.net/member.php?u=66259) - Socket code from one of the original Server Hop plugins released on AlliedMods.
+* [Blueberry](https://github.com/Blueberryy) - Russian translation file.
