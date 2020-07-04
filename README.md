@@ -3,7 +3,8 @@
 GFL's Server Hop plugin that allows players to view and connect to other game servers within GFL. This plugin also includes rotating advertisements for each servers from the list.
 
 ## Requirements
-This plugin requires GFL's Core [plugin](https://github.com/GFLClan/SM-Core) and GFL's MySQL plugin to be added to the game server and enabled. Please ensure the MySQL database used for the GFL MySQL plugin has a table called `gfl_serverlist` where each server is stored.
+* [GFL Core](https://github.com/GFLClan/SM-Core) - The core of the GFL SourceMod plugins and includes useful natives for logging purposes.
+* [GFL MySQL](https://github.com/GFLClan/SM-MySQL) - GFL's MySQL plugin for handling database connection.
 
 ## ConVars
 * `sm_gflsh_advert_interval` => Interval in seconds to display a server advertisement to chat (default `65`).
