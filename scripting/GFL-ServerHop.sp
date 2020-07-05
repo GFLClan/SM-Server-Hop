@@ -20,35 +20,35 @@
 #define MAX_STR_LEN 160
 
 // ENUM's aren't supported with the new syntax. Therefore, we need to stay on the old syntax until the SourceMod Developers find a better method.
-enum Servers 
+enum struct Servers 
 {
-	iServerID,
-	String:sName[MAX_NAME_LENGTH],
-	iLocationID,
-	String:sPubIP[MAX_NAME_LENGTH],
-	String:sIP[11],
-	iPort,
-	iGameID,
-	iPlayerCount,
-	iMaxPlayers,
-	iBots,
-	String:sCurMap[MAX_STR_LEN],
-	iNew,
-	Handle:hSocket
+	int iServerID;
+	char sName[MAX_NAME_LENGTH];
+	int iLocationID;
+	char sPubIP[MAX_NAME_LENGTH];
+	char sIP[11];
+	int iPort;
+	int iGameID;
+	int iPlayerCount;
+	int iMaxPlayers;
+	int iBots;
+	char sCurMap[MAX_STR_LEN];
+	int iNew;
+	Handle hSocket;
 }
 
-enum Games 
+enum struct Games 
 {
-	iGameID,
-	String:sName[MAX_NAME_LENGTH],
-	iSpecial,
-	String:sAbr[MAX_NAME_LENGTH],
-	String:sCode[MAX_NAME_LENGTH]
+	int iGameID;
+	char sName[MAX_NAME_LENGTH];
+	int iSpecial;
+	char sAbr[MAX_NAME_LENGTH];
+	char sCode[MAX_NAME_LENGTH];
 }
 
 // Arrays
-int g_arrServers[MAXSERVERS][Servers];
-int g_arrGames[MAXGAMES][Games];
+Servers g_arrServers[MAXSERVERS];
+Games g_arrGames[MAXGAMES];
 
 char g_arrMenuTriggers[][] = 
 {
@@ -182,16 +182,16 @@ stock void Forwards()
 
 stock void ForwardConVars() 
 {	
-	g_hAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
+	g_hAdvertInterval = CreateConVar("sm_GFLSH_advert_interval", "65.0", "Every x seconds display a server advertisement.");
 	HookConVarChange(g_hAdvertInterval, CVarChanged);
 	
-	g_hGameID = CreateConVar("sm_gflsh_gameid", "0", "The Game ID of the servers you want to retrieve in the database. 0 = All");
+	g_hGameID = CreateConVar("sm_gflsh_gameid", "4", "The Game ID of the servers you want to retrieve in the database. 0 = All");
 	HookConVarChange(g_hGameID, CVarChanged);	
 	
 	g_hRefreshInterval = CreateConVar("sm_gflsh_refresh_interval", "500.0", "Every x seconds refresh the server list.");
 	HookConVarChange(g_hRefreshInterval, CVarChanged);
 	
-	g_hLocationID = CreateConVar("sm_gflsh_locationid", "0", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
+	g_hLocationID = CreateConVar("sm_gflsh_locationid", "1", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
 	HookConVarChange(g_hLocationID, CVarChanged);
 	
 	g_hTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");
@@ -221,7 +221,7 @@ stock void ForwardConVars()
 	g_hUseSocket = CreateConVar("sm_gflsh_use_socket", "1", "Uses socket to request server information instead of MySQL. This requires the socket extension.");
 	HookConVarChange(g_hUseSocket, CVarChanged);	
 
-	g_hGameAbbreviations = CreateConVar("sm_gflsh_abbr", "1", "Use the game abbreviation infront of server advertisements.");
+	g_hGameAbbreviations = CreateConVar("sm_gflsh_abbr", "0", "Use the game abbreviation infront of server advertisements.");
 	HookConVarChange(g_hGameAbbreviations, CVarChanged);	
 	
 	g_hNewServerAnnounceMethod = CreateConVar("sm_gflsh_new_server_announce_method", "0", "Method to use on round start (0 = Do it all in one with PrintToChatAll, 1 = Loop through all clients). 0 = Better performance but less randomization, 1 = Worse performance but each client will get a different new server each time (more randomized).");
@@ -513,42 +513,42 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 			}
 			
 			// Variables not relying on the socket extension.
-			g_arrServers[iCount][iServerID] = SQL_FetchInt(hHndl, 0);
-			SQL_FetchString(hHndl, 1, g_arrServers[iCount][sName], MAX_NAME_LENGTH);
-			g_arrServers[iCount][iLocationID] = SQL_FetchInt(hHndl, 2);
-			SQL_FetchString(hHndl, 3, g_arrServers[iCount][sPubIP], MAX_NAME_LENGTH);
-			SQL_FetchString(hHndl, 4, g_arrServers[iCount][sIP], 32);
-			g_arrServers[iCount][iPort] = SQL_FetchInt(hHndl, 5);
-			g_arrServers[iCount][iGameID] = SQL_FetchInt(hHndl, 8);
-			g_arrServers[iCount][iNew] = SQL_FetchInt(hHndl, 16);
+			g_arrServers[iCount].iServerID = SQL_FetchInt(hHndl, 0);
+			SQL_FetchString(hHndl, 1, g_arrServers[iCount].sName, MAX_NAME_LENGTH);
+			g_arrServers[iCount].iLocationID = SQL_FetchInt(hHndl, 2);
+			SQL_FetchString(hHndl, 3, g_arrServers[iCount].sPubIP, MAX_NAME_LENGTH);
+			SQL_FetchString(hHndl, 4, g_arrServers[iCount].sIP, 32);
+			g_arrServers[iCount].iPort = SQL_FetchInt(hHndl, 5);
+			g_arrServers[iCount].iGameID = SQL_FetchInt(hHndl, 8);
+			g_arrServers[iCount].iNew = SQL_FetchInt(hHndl, 16);
 			
 			// Check if the socket convar is enabled & if the socket extension is enabled.
 			if (g_bUseSocket && g_bSocketEnabled)
 			{
 				// Check to see if the socket exist.
-				if (g_arrServers[iCount][hSocket] != null)
+				if (g_arrServers[iCount].hSocket != null)
 				{
 					// Close it.
-					delete g_arrServers[iCount][hSocket];
+					delete g_arrServers[iCount].hSocket;
 				}
 				
 				// Create the socket.
-				g_arrServers[iCount][hSocket] = SocketCreate(SOCKET_UDP, Socket_OnError);
-				SocketSetArg(g_arrServers[iCount][hSocket], iCount);
-				SocketConnect(g_arrServers[iCount][hSocket], Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount][sPubIP], g_arrServers[iCount][iPort]);
+				g_arrServers[iCount].hSocket = SocketCreate(SOCKET_UDP, Socket_OnError);
+				SocketSetArg(g_arrServers[iCount].hSocket, iCount);
+				SocketConnect(g_arrServers[iCount].hSocket, Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort);
 			}
 			else
 			{
 				// Use MySQL instead.
-				g_arrServers[iCount][iPlayerCount] = SQL_FetchInt(hHndl, 9);
-				g_arrServers[iCount][iMaxPlayers] = SQL_FetchInt(hHndl, 10);
-				g_arrServers[iCount][iBots] = SQL_FetchInt(hHndl, 11);
-				SQL_FetchString(hHndl, 12, g_arrServers[iCount][sCurMap], MAX_NAME_LENGTH);
+				g_arrServers[iCount].iPlayerCount = SQL_FetchInt(hHndl, 9);
+				g_arrServers[iCount].iMaxPlayers = SQL_FetchInt(hHndl, 10);
+				g_arrServers[iCount].iBots = SQL_FetchInt(hHndl, 11);
+				SQL_FetchString(hHndl, 12, g_arrServers[iCount].sCurMap, MAX_NAME_LENGTH);
 			}
 			
 			if (g_bAdvanceDebug) 
 			{
-				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Loading: %s (%i), currently %i/%i (%i). IP: %s:%i (%s:%i) on map: %s also in location %i with the game id being %i", g_arrServers[iCount][sName], g_arrServers[iCount][iServerID], g_arrServers[iCount][iPlayerCount], g_arrServers[iCount][iMaxPlayers], g_arrServers[iCount][iBots], g_arrServers[iCount][sPubIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sCurMap], g_arrServers[iCount][iLocationID], g_arrServers[iCount][iGameID]);
+				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Loading: %s (%i), currently %i/%i (%i). IP: %s:%i (%s:%i) on map: %s also in location %i with the game id being %i", g_arrServers[iCount].sName, g_arrServers[iCount].iServerID, g_arrServers[iCount].iPlayerCount, g_arrServers[iCount].iMaxPlayers, g_arrServers[iCount].iBots, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sCurMap, g_arrServers[iCount].iLocationID, g_arrServers[iCount].iGameID);
 			}
 			
 			iCount++;
@@ -605,15 +605,15 @@ public void CallBack_GameTQuery(Handle hOwner, Handle hHndl, const char[] sErr, 
 			}
 			
 			// Variables.
-			g_arrGames[iCount][iGameID] = SQL_FetchInt(hHndl, 0);
-			SQL_FetchString(hHndl, 1, g_arrGames[iCount][sName], MAX_NAME_LENGTH);
-			g_arrGames[iCount][iSpecial] = SQL_FetchInt(hHndl, 2);
-			SQL_FetchString(hHndl, 3, g_arrGames[iCount][sAbr], MAX_NAME_LENGTH);
-			SQL_FetchString(hHndl, 4, g_arrGames[iCount][sCode], MAX_NAME_LENGTH);
+			g_arrGames[iCount].iGameID = SQL_FetchInt(hHndl, 0);
+			SQL_FetchString(hHndl, 1, g_arrGames[iCount].sName, MAX_NAME_LENGTH);
+			g_arrGames[iCount].iSpecial = SQL_FetchInt(hHndl, 2);
+			SQL_FetchString(hHndl, 3, g_arrGames[iCount].sAbr, MAX_NAME_LENGTH);
+			SQL_FetchString(hHndl, 4, g_arrGames[iCount].sCode, MAX_NAME_LENGTH);
 			
 			if (g_bAdvanceDebug) 
 			{
-				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_GameTQuery() :: Loading: %s (%i), Special: %i, Abbreviation: %s, Code Name: %s", g_arrGames[iCount][sName], g_arrGames[iCount][iGameID], g_arrGames[iCount][iSpecial], g_arrGames[iCount][sAbr], g_arrGames[iCount][sCode]);
+				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_GameTQuery() :: Loading: %s (%i), Special: %i, Abbreviation: %s, Code Name: %s", g_arrGames[iCount].sName, g_arrGames[iCount].iGameID, g_arrGames[iCount].iSpecial, g_arrGames[iCount].sAbr, g_arrGames[iCount].sCode);
 			}
 			
 			iCount++;
@@ -658,7 +658,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 			while (!bFound)
 			{
 				// Check whether it's a new server or not.
-				if (g_arrServers[iCount][iNew] > 0)
+				if (g_arrServers[iCount].iNew > 0)
 				{
 					if (g_bAdvanceDebug)
 					{
@@ -707,7 +707,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 			{
 				// Format the message.
 				char sMsg[512];
-				Format(sMsg, sizeof(sMsg), "%t", "NewServerAnnounceMsg", g_arrServers[iCount][sName], g_arrServers[iCount][iPlayerCount], g_arrServers[iCount][iMaxPlayers], g_arrServers[iCount][sPubIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sCurMap]);
+				Format(sMsg, sizeof(sMsg), "%t", "NewServerAnnounceMsg", g_arrServers[iCount].sName, g_arrServers[iCount].iPlayerCount, g_arrServers[iCount].iMaxPlayers, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sCurMap);
 				
 				// Print to the client.
 				CPrintToChatAll(sMsg);
@@ -742,7 +742,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				while (!bFound)
 				{
 					// Check whether it's a new server or not.
-					if (g_arrServers[iCount][iNew] > 0)
+					if (g_arrServers[iCount].iNew > 0)
 					{
 						if (g_bAdvanceDebug)
 						{
@@ -791,7 +791,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				{
 					// Format the message.
 					char sMsg[512];
-					Format(sMsg, sizeof(sMsg), "%t", "NewServerAnnounceMsg", g_arrServers[iCount][sName], g_arrServers[iCount][iPlayerCount], g_arrServers[iCount][iMaxPlayers], g_arrServers[iCount][sPubIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sIP], g_arrServers[iCount][iPort], g_arrServers[iCount][sCurMap]);
+					Format(sMsg, sizeof(sMsg), "%t", "NewServerAnnounceMsg", g_arrServers[iCount].sName, g_arrServers[iCount].iPlayerCount, g_arrServers[iCount].iMaxPlayers, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sCurMap);
 					
 					// Print to the client.
 					CPrintToChat(i, sMsg);
@@ -991,12 +991,12 @@ public Action Command_PrintServers(int iClient, int iArgs)
 	
 	for (int i = 0; i < g_iMaxServers; i++)
 	{
-		if (StrEqual(g_arrServers[i][sName], ""))
+		if (StrEqual(g_arrServers[i].sName, ""))
 		{
 			continue;
 		}
 		
-		Format(sMsg, sizeof(sMsg), "[%i] %t%t", g_arrServers[i][iServerID], "ServerHopAdPrefix", "ServerHopAd", g_arrServers[i][sName], g_arrServers[i][iPlayerCount], g_arrServers[i][iMaxPlayers], g_arrServers[i][sPubIP], g_arrServers[i][iPort], g_arrServers[i][sIP], g_arrServers[i][iPort], g_arrServers[i][sCurMap]);
+		Format(sMsg, sizeof(sMsg), "[%i] %t%t", g_arrServers[i].iServerID, "ServerHopAdPrefix", "ServerHopAd", g_arrServers[i].sName, g_arrServers[i].iPlayerCount, g_arrServers[i].iMaxPlayers, g_arrServers[i].sPubIP, g_arrServers[i].iPort, g_arrServers[i].sIP, g_arrServers[i].iPort, g_arrServers[i].sCurMap);
 
 		CPrintToChat(iClient, sMsg);
 	}
@@ -1010,12 +1010,12 @@ public Action Command_PrintGames(int iClient, int iArgs)
 	
 	for (int i = 0; i < g_iMaxGames; i++)
 	{
-		if (StrEqual(g_arrGames[i][sName], ""))
+		if (StrEqual(g_arrGames[i].sName, ""))
 		{
 			continue;
 		}
 		
-		Format(sMsg, sizeof(sMsg), "[%i] %t%t", g_arrGames[i][iGameID], "ServerHopAdPrefix", "ServerHopGameAd", g_arrGames[i][sName], g_arrGames[i][iSpecial], g_arrGames[i][sAbr], g_arrGames[i][sCode]);
+		Format(sMsg, sizeof(sMsg), "[%i] %t%t", g_arrGames[i].iGameID, "ServerHopAdPrefix", "ServerHopGameAd", g_arrGames[i].sName, g_arrGames[i].iSpecial, g_arrGames[i].sAbr, g_arrGames[i].sCode);
 
 		CPrintToChat(iClient, sMsg);
 	}
@@ -1033,27 +1033,27 @@ public Action Timer_Advert(Handle hTimer)
 		return;
 	}
 	
-	if (!g_arrServers[g_iRotate][iServerID]) 
+	if (!g_arrServers[g_iRotate].iServerID) 
 	{
-		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server ID is lowered than one. Not continuing. Server name: %s", g_arrServers[g_iRotate][sName]);
+		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server ID is lowered than one. Not continuing. Server name: %s", g_arrServers[g_iRotate].sName);
 		MoveUpServer();
 		
 		return;
 	}
 	
-	if (g_bDisableOffline && g_arrServers[g_iRotate][iMaxPlayers] < 1) 
+	if (g_bDisableOffline && g_arrServers[g_iRotate].iMaxPlayers < 1) 
 	{
 		// Find the next online server.
 		for (int i = g_iRotate; i < g_iMaxServers; i++)
 		{
 			if (g_bAdvanceDebug) 
 			{
-				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s due to being offline (0 maximum players).", g_arrServers[g_iRotate][sIP]);
+				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s due to being offline (0 maximum players).", g_arrServers[g_iRotate].sIP);
 			}
 		
 			MoveUpServer();
 			
-			if (g_arrServers[g_iRotate][iMaxPlayers] > 0)
+			if (g_arrServers[g_iRotate].iMaxPlayers > 0)
 			{
 				break;
 			}
@@ -1062,13 +1062,13 @@ public Action Timer_Advert(Handle hTimer)
 	
 	if (g_bDisableCurrent) 
 	{
-		if (StrEqual(g_arrServers[g_iRotate][sIP], g_sServerIP, false) && g_arrServers[g_iRotate][iPort] == g_iServerPort) 
+		if (StrEqual(g_arrServers[g_iRotate].sIP, g_sServerIP, false) && g_arrServers[g_iRotate].iPort == g_iServerPort) 
 		{
 			MoveUpServer();
 			
 			if (g_bAdvanceDebug) 
 			{
-				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s:%d due to it matching the current server.", g_arrServers[g_iRotate][sIP], g_arrServers[g_iRotate][iPort]);
+				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s:%d due to it matching the current server.", g_arrServers[g_iRotate].sIP, g_arrServers[g_iRotate].iPort);
 			}
 			
 			return;
@@ -1081,12 +1081,12 @@ public Action Timer_Advert(Handle hTimer)
 	
 	if (g_bGameAbbreviations)
 	{
-		int iGame = FindGameID(g_arrServers[g_iRotate][iGameID]);
+		int iGame = FindGameID(g_arrServers[g_iRotate].iGameID);
 		
 		if (iGame > -1)
 		{
 			char sTemp[MAX_NAME_LENGTH];
-			Format(sTemp, sizeof(sTemp), "[%s]", g_arrGames[iGame][sAbr]);
+			Format(sTemp, sizeof(sTemp), "[%s]", g_arrGames[iGame].sAbr);
 			
 			strcopy(sAbbr, sizeof(sAbbr), sTemp);
 			//PrintToServer("This: %s (%s)", sAbbr, sTemp);
@@ -1094,7 +1094,7 @@ public Action Timer_Advert(Handle hTimer)
 	}
 	
 	char sMsg[256];
-	Format(sMsg, sizeof(sMsg), "%t%t", "ServerHopAdPrefix", "ServerHopAd", g_arrServers[g_iRotate][sName], g_arrServers[g_iRotate][iPlayerCount], g_arrServers[g_iRotate][iMaxPlayers], g_arrServers[g_iRotate][sPubIP], g_arrServers[g_iRotate][iPort], g_arrServers[g_iRotate][sIP], g_arrServers[g_iRotate][iPort], g_arrServers[g_iRotate][sCurMap], sAbbr);
+	Format(sMsg, sizeof(sMsg), "%t%t", "ServerHopAdPrefix", "ServerHopAd", g_arrServers[g_iRotate].sName, g_arrServers[g_iRotate].iPlayerCount, g_arrServers[g_iRotate].iMaxPlayers, g_arrServers[g_iRotate].sPubIP, g_arrServers[g_iRotate].iPort, g_arrServers[g_iRotate].sIP, g_arrServers[g_iRotate].iPort, g_arrServers[g_iRotate].sCurMap, sAbbr);
 	
 	for (int iClient = 1; iClient <= MaxClients; iClient++)
 	{
@@ -1108,7 +1108,7 @@ public Action Timer_Advert(Handle hTimer)
 	
 	if (g_bAdvanceDebug) 
 	{
-		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server Advert: %s (%i)(%i)", g_arrServers[g_iRotate][sName], g_arrServers[g_iRotate][iServerID], g_iRotate);
+		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server Advert: %s (%i)(%i)", g_arrServers[g_iRotate].sName, g_arrServers[g_iRotate].iServerID, g_iRotate);
 	}
 	
 	Call_StartForward(g_hOnAdvert);
@@ -1142,19 +1142,19 @@ stock void ResetServersArray()
 {
 	for (int i = 0; i < MAXSERVERS; i++)
 	{
-		g_arrServers[i][iServerID] = -1;
-		strcopy(g_arrServers[i][sName], MAX_NAME_LENGTH, "");
-		g_arrServers[i][iLocationID] = -1;
-		strcopy(g_arrServers[i][sPubIP], MAX_NAME_LENGTH, "");
-		strcopy(g_arrServers[i][sIP], MAX_NAME_LENGTH, "");
-		g_arrServers[i][iPort] = -1;
-		g_arrServers[i][iGameID] = -1;
-		g_arrServers[i][iPlayerCount] = -1;
-		g_arrServers[i][iMaxPlayers] = -1;
-		g_arrServers[i][iBots] = -1;
-		strcopy(g_arrServers[i][sCurMap], MAX_NAME_LENGTH, "");
-		g_arrServers[i][iNew] = -1;
-		g_arrServers[i][hSocket] = null;
+		g_arrServers[i].iServerID = -1;
+		strcopy(g_arrServers[i].sName, MAX_NAME_LENGTH, "");
+		g_arrServers[i].iLocationID = -1;
+		strcopy(g_arrServers[i].sPubIP, MAX_NAME_LENGTH, "");
+		strcopy(g_arrServers[i].sIP, MAX_NAME_LENGTH, "");
+		g_arrServers[i].iPort = -1;
+		g_arrServers[i].iGameID = -1;
+		g_arrServers[i].iPlayerCount = -1;
+		g_arrServers[i].iMaxPlayers = -1;
+		g_arrServers[i].iBots = -1;
+		strcopy(g_arrServers[i].sCurMap, MAX_NAME_LENGTH, "");
+		g_arrServers[i].iNew = -1;
+		g_arrServers[i].hSocket = null;
 	}
 }
 
@@ -1162,11 +1162,11 @@ stock void ResetGamesArray()
 {
 	for (int i = 0; i < MAXGAMES; i++)
 	{
-		g_arrGames[i][iGameID] = -1;
-		strcopy(g_arrGames[i][sName], MAX_NAME_LENGTH, "");
-		g_arrGames[i][iSpecial] = -1;
-		strcopy(g_arrGames[i][sAbr], MAX_NAME_LENGTH, "");
-		strcopy(g_arrGames[i][sCode], MAX_NAME_LENGTH, "");
+		g_arrGames[i].iGameID = -1;
+		strcopy(g_arrGames[i].sName, MAX_NAME_LENGTH, "");
+		g_arrGames[i].iSpecial = -1;
+		strcopy(g_arrGames[i].sAbr, MAX_NAME_LENGTH, "");
+		strcopy(g_arrGames[i].sCode, MAX_NAME_LENGTH, "");
 	}
 }
 
@@ -1207,13 +1207,13 @@ stock void OpenServersMenu(iClient)
 	
 	for (int i = 0; i < MAXSERVERS; i++)
 	{
-		if (g_arrServers[i][iServerID] > 0)
+		if (g_arrServers[i].iServerID > 0)
 		{
 			char sID[11];
 			Format(sID, sizeof(sID), "%d", i);
 			
 			char sFullName[255];
-			Format(sFullName, sizeof(sFullName), "%s (%d/%d)", g_arrServers[i][sName], g_arrServers[i][iPlayerCount], g_arrServers[i][iMaxPlayers]);
+			Format(sFullName, sizeof(sFullName), "%s (%d/%d)", g_arrServers[i].sName, g_arrServers[i].iPlayerCount, g_arrServers[i].iMaxPlayers);
 			
 			AddMenuItem(hMenu, sID, sFullName);
 		}
@@ -1254,12 +1254,12 @@ stock void DisplayServerInfo(int iClient, int i)
 	
 	char sFullName[255], sPlayerCount[255], sPublicIP[255], sRealIP[255], sMapName[64], sFullMenu[1024], sFullIP[64], sNew[32];
 	
-	Format(sFullName, sizeof(sFullName), "%t", "MenuName", g_arrServers[i][sName]);
-	Format(sPlayerCount, sizeof(sPlayerCount), "%t", "MenuPlayers", g_arrServers[i][iPlayerCount], g_arrServers[i][iMaxPlayers]);
-	Format(sPublicIP, sizeof(sPublicIP), "%t", "MenuPublicIP", g_arrServers[i][sPubIP], g_arrServers[i][iPort]);
-	Format(sRealIP, sizeof(sRealIP), "%t", "MenuRealIP", g_arrServers[i][sIP], g_arrServers[i][iPort]);
-	Format(sMapName, sizeof(sMapName), "%t", "MenuMap", g_arrServers[i][sCurMap]);
-	if (g_arrServers[i][iNew] > 0)
+	Format(sFullName, sizeof(sFullName), "%t", "MenuName", g_arrServers[i].sName);
+	Format(sPlayerCount, sizeof(sPlayerCount), "%t", "MenuPlayers", g_arrServers[i].iPlayerCount, g_arrServers[i].iMaxPlayers);
+	Format(sPublicIP, sizeof(sPublicIP), "%t", "MenuPublicIP", g_arrServers[i].sPubIP, g_arrServers[i].iPort);
+	Format(sRealIP, sizeof(sRealIP), "%t", "MenuRealIP", g_arrServers[i].sIP, g_arrServers[i].iPort);
+	Format(sMapName, sizeof(sMapName), "%t", "MenuMap", g_arrServers[i].sCurMap);
+	if (g_arrServers[i].iNew > 0)
 	{
 		Format(sNew, sizeof(sNew), "%t: Yes", "MenuNew");
 	}
@@ -1274,7 +1274,7 @@ stock void DisplayServerInfo(int iClient, int i)
 	
 	if (GetEngineVersion() != Engine_CSGO)
 	{
-		Format(sFullIP, sizeof(sFullIP), "%s:%d", g_arrServers[i][sIP], g_arrServers[i][iPort]);
+		Format(sFullIP, sizeof(sFullIP), "%s:%d", g_arrServers[i].sIP, g_arrServers[i].iPort);
 		AddMenuItem(hMenu, sFullIP, "Connect");
 	}
 	
@@ -1410,12 +1410,12 @@ public int Socket_OnReceived(Handle hSock, char[] sReceiveData, const int iDataS
 	sGameDesc = GetString(sReceiveData, iDataSize, iOffset);
 	iOffset += strlen(sGameDesc) + 1;
 	iOffset += 2;
-	g_arrServers[iCount][iPlayerCount] = GetByte(sReceiveData, iOffset)
+	g_arrServers[iCount].iPlayerCount = GetByte(sReceiveData, iOffset)
 	iOffset++;
-	g_arrServers[iCount][iMaxPlayers] = GetByte(sReceiveData, iOffset);
+	g_arrServers[iCount].iMaxPlayers = GetByte(sReceiveData, iOffset);
 	
 	// Copy map name.
-	strcopy(g_arrServers[iCount][sCurMap], MAX_STR_LEN, sMapName);
+	strcopy(g_arrServers[iCount].sCurMap, MAX_STR_LEN, sMapName);
 
 	// Delete the socket handle.
 	delete hSock;
@@ -1430,8 +1430,8 @@ public int Socket_OnDisconnected(Handle hSock, int iCount)
 public int Socket_OnError(Handle hSock, const int iErrorType, const int iErrorNum, int iCount)
 {
 	// Since the server is down, set the maxplayers to 0, etc.
-	g_arrServers[iCount][iMaxPlayers] = 0;
-	g_arrServers[iCount][iPlayerCount] = 0;
+	g_arrServers[iCount].iMaxPlayers = 0;
+	g_arrServers[iCount].iPlayerCount = 0;
 	
 	// Delete the socket's handle. 
 	delete hSock;
@@ -1443,14 +1443,14 @@ stock int FindGameID(int iGame)
 	
 	for (int i = 0; i < g_iMaxGames; i++)
 	{
-		if (g_arrGames[i][iGameID] != iGame)
+		if (g_arrGames[i].iGameID != iGame)
 		{
 			// Not the game ID. Continue...
-			//PrintToServer("Wrong game! %i doesn't equal %i (%s)", iGame, g_arrGames[i][iGameID], g_arrGames[i][sAbr]);
+			//PrintToServer("Wrong game! %i doesn't equal %i (%s)", iGame, g_arrGames[i].iGameID, g_arrGames[i].sAbr);
 			continue;
 		}
 		
-		//PrintToServer("Right game! %i does equal %i (%s)", iGame, g_arrGames[i][iGameID], g_arrGames[i][sAbr]);
+		//PrintToServer("Right game! %i does equal %i (%s)", iGame, g_arrGames[i].iGameID, g_arrGames[i].sAbr);
 		iID = i;
 		break;
 	}
