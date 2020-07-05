@@ -185,13 +185,13 @@ stock void ForwardConVars()
 	g_hAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
 	HookConVarChange(g_hAdvertInterval, CVarChanged);
 	
-	g_hGameID = CreateConVar("sm_gflsh_gameid", "4", "The Game ID of the servers you want to retrieve in the database. 0 = All");
+	g_hGameID = CreateConVar("sm_gflsh_gameid", "0", "The Game ID of the servers you want to retrieve in the database. 0 = All");
 	HookConVarChange(g_hGameID, CVarChanged);	
 	
 	g_hRefreshInterval = CreateConVar("sm_gflsh_refresh_interval", "500.0", "Every x seconds refresh the server list.");
 	HookConVarChange(g_hRefreshInterval, CVarChanged);
 	
-	g_hLocationID = CreateConVar("sm_gflsh_locationid", "1", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
+	g_hLocationID = CreateConVar("sm_gflsh_locationid", "0", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
 	HookConVarChange(g_hLocationID, CVarChanged);
 	
 	g_hTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");
@@ -221,7 +221,7 @@ stock void ForwardConVars()
 	g_hUseSocket = CreateConVar("sm_gflsh_use_socket", "1", "Uses socket to request server information instead of MySQL. This requires the socket extension.");
 	HookConVarChange(g_hUseSocket, CVarChanged);	
 
-	g_hGameAbbreviations = CreateConVar("sm_gflsh_abbr", "0", "Use the game abbreviation infront of server advertisements.");
+	g_hGameAbbreviations = CreateConVar("sm_gflsh_abbr", "1", "Use the game abbreviation infront of server advertisements.");
 	HookConVarChange(g_hGameAbbreviations, CVarChanged);	
 	
 	g_hNewServerAnnounceMethod = CreateConVar("sm_gflsh_new_server_announce_method", "0", "Method to use on round start (0 = Do it all in one with PrintToChatAll, 1 = Loop through all clients). 0 = Better performance but less randomization, 1 = Worse performance but each client will get a different new server each time (more randomized).");
