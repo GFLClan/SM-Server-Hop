@@ -82,6 +82,7 @@ ConVar g_hNewServerAnnounceMethod = null;
 ConVar g_hUseSocket = null;
 ConVar g_hGameAbbreviations = null;
 ConVar g_hIPAddress = null;
+ConVar g_hSocketTimeout = null;
 
 // ConVar Values
 float g_fAdvertInterval;
@@ -229,6 +230,9 @@ stock void ForwardConVars()
 	
 	g_hIPAddress = CreateConVar("sm_gflsh_server_ip", "", "If the plugin fails to get the current server's public IP due to something like a specific NAT configuration, just use this to set the public IP. Leave blank to let plugin assume what the public IP address is.");
 	HookConVarChange(g_hIPAddress, CVarChanged);
+
+	// 1-5-20, I'm starting to use IntValue(), so no need for HookConVarChange.
+	g_hSocketTimeout = CreateConVar("sm_gflsh_socket_timeout", "60", "The timeout for each socket. 0 will set no timeout which will keep socket handles open.");
 	
 	AutoExecConfig(true, "GFL-ServerHop");
 }
@@ -534,6 +538,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				
 				// Create the socket.
 				g_arrServers[iCount].hSocket = SocketCreate(SOCKET_UDP, Socket_OnError);
+				SocketSetOption(g_arrServers[iCount].hSocket, SocketReceiveTimeout, g_hSocketTimeout.IntValue);
 				SocketSetArg(g_arrServers[iCount].hSocket, iCount);
 				SocketConnect(g_arrServers[iCount].hSocket, Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort);
 			}
