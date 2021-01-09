@@ -84,21 +84,8 @@ ConVar g_cvIPAddress = null;
 ConVar g_cvSocketTimeout = null;
 
 // ConVar Values
-float g_fAdvertInterval;
-int g_iGameID;
-float g_fRefreshInterval;
-int g_iLocationID;
 char g_sTableName[MAX_NAME_LENGTH];
 char g_sGameTableName[MAX_NAME_LENGTH];
-bool g_bAdvanceDebug;
-bool g_bDisableOffline;
-bool g_bDisableCurrent;
-int g_iDBPriority;
-bool g_bCreateDBTable;
-bool g_bNewServerAnnounce;
-int g_iNewAnnounceServerMethod;
-bool g_bUseSocket;
-bool g_bGameAbbreviations;
 char g_sIPAddress[24];
 
 // Other
@@ -183,56 +170,30 @@ stock void Forwards()
 stock void ForwardConVars() 
 {	
 	g_cvAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
-	HookConVarChange(g_cvAdvertInterval, CVarChanged);
-	
 	g_cvGameID = CreateConVar("sm_gflsh_gameid", "0", "The Game ID of the servers you want to retrieve in the database. 0 = All");
-	HookConVarChange(g_cvGameID, CVarChanged);	
-	
 	g_cvRefreshInterval = CreateConVar("sm_gflsh_refresh_interval", "500.0", "Every x seconds refresh the server list.");
-	HookConVarChange(g_cvRefreshInterval, CVarChanged);
-	
 	g_cvLocationID = CreateConVar("sm_gflsh_locationid", "0", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
-	HookConVarChange(g_cvLocationID, CVarChanged);
-	
-	g_cvTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");
-	HookConVarChange(g_cvTableName, CVarChanged);		
-	
+	g_cvTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");	
 	g_cvGameTableName = CreateConVar("sm_gflsh_gametablename", "gfl_gamelist", "The table to select the games from.");
-	HookConVarChange(g_cvGameTableName, CVarChanged);	
-	
 	g_cvAdvanceDebug = CreateConVar("sm_gflsh_advancedebug", "0", "Enable advanced debugging for this plugin?");
-	HookConVarChange(g_cvAdvanceDebug, CVarChanged);	
-	
 	g_cvDisableOffline = CreateConVar("sm_gflsh_disableoffline", "1", "1 = Don't include offline servers in the advertisements (0 player count).");
-	HookConVarChange(g_cvDisableOffline, CVarChanged);
-	
-	g_cvDisableCurrent = CreateConVar("sm_gflsh_disablecurrent", "1", "1 = Disable the current server from showing in the advertisement list?");
-	HookConVarChange(g_cvDisableCurrent, CVarChanged);	
-	
-	g_cvDBPriority = CreateConVar("sm_gflsh_db_priority", "1", "The priority of queries for the plugin.");
-	HookConVarChange(g_cvDBPriority, CVarChanged);	
-	
-	g_cvCreateDBTable = CreateConVar("sm_gflsh_db_createtable", "0", "Attempt to create the table needed for this plugin if it doesn't exist.");
-	HookConVarChange(g_cvCreateDBTable, CVarChanged);	
-	
-	g_cvNewServerAnnounce = CreateConVar("sm_gflsh_new_server_announce", "0", "Announces new servers one round start.");
-	HookConVarChange(g_cvNewServerAnnounce, CVarChanged);	
-	
+	g_cvDisableCurrent = CreateConVar("sm_gflsh_disablecurrent", "1", "1 = Disable the current server from showing in the advertisement list?");	
+	g_cvDBPriority = CreateConVar("sm_gflsh_db_priority", "1", "The priority of queries for the plugin.");	
+	g_cvCreateDBTable = CreateConVar("sm_gflsh_db_createtable", "0", "Attempt to create the table needed for this plugin if it doesn't exist.");	
+	g_cvNewServerAnnounce = CreateConVar("sm_gflsh_new_server_announce", "0", "Announces new servers one round start.");	
 	g_cvUseSocket = CreateConVar("sm_gflsh_use_socket", "1", "Uses socket to request server information instead of MySQL. This requires the socket extension.");
-	HookConVarChange(g_cvUseSocket, CVarChanged);	
-
 	g_cvGameAbbreviations = CreateConVar("sm_gflsh_abbr", "1", "Use the game abbreviation infront of server advertisements.");
-	HookConVarChange(g_cvGameAbbreviations, CVarChanged);	
-	
 	g_cvNewServerAnnounceMethod = CreateConVar("sm_gflsh_new_server_announce_method", "0", "Method to use on round start (0 = Do it all in one with PrintToChatAll, 1 = Loop through all clients). 0 = Better performance but less randomization, 1 = Worse performance but each client will get a different new server each time (more randomized).");
-	HookConVarChange(g_cvNewServerAnnounceMethod, CVarChanged);	
-	
 	g_cvIPAddress = CreateConVar("sm_gflsh_server_ip", "", "If the plugin fails to get the current server's public IP due to something like a specific NAT configuration, just use this to set the public IP. Leave blank to let plugin assume what the public IP address is.");
+	g_cvSocketTimeout = CreateConVar("sm_gflsh_socket_timeout", "60", "The timeout for each socket. 0 will set no timeout which will keep socket handles open.");
+
+	// Hook ConVar change on strings + DB priority.
+	HookConVarChange(g_cvTableName, CVarChanged);
+	HookConVarChange(g_cvGameTableName, CVarChanged);
 	HookConVarChange(g_cvIPAddress, CVarChanged);
 
-	// 1-5-20, I'm starting to use IntValue(), so no need for HookConVarChange.
-	g_cvSocketTimeout = CreateConVar("sm_gflsh_socket_timeout", "60", "The timeout for each socket. 0 will set no timeout which will keep socket handles open.");
-	
+	HookConVarChange(g_cvDBPriority, DBChanged);
+
 	AutoExecConfig(true, "GFL-ServerHop");
 }
 
@@ -260,6 +221,50 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 	}
 }
 
+public void DBChanged(Handle hCVar, const char[] OldV, const char[] NewV)
+{
+	if (g_cvDBPriority.IntValue == 0)
+	{
+		// High.
+		dbPriority = DBPrio_High;
+		
+		if (g_cvAdvanceDebug.BoolValue)
+		{
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to high.");
+		}
+	}
+	else if (g_cvDBPriority.IntValue == 1)
+	{
+		// Normal.
+		dbPriority = DBPrio_Normal;
+		
+		if (g_cvAdvanceDebug.BoolValue)
+		{
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to normal.");
+		}
+	}
+	else if (g_cvDBPriority.IntValue == 2)
+	{
+		// Low.
+		dbPriority = DBPrio_Low;
+		
+		if (g_cvAdvanceDebug.BoolValue)
+		{
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to low.");
+		}
+	}
+	else
+	{
+		// Normal.
+		dbPriority = DBPrio_Normal;
+		
+		if (g_cvAdvanceDebug.BoolValue)
+		{
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to normal. (value not valid)");
+		}
+	}
+}
+
 stock void ForwardCommands() 
 {
 	RegAdminCmd("sm_sh_reset", Command_Reset, ADMFLAG_ROOT);
@@ -282,63 +287,9 @@ public void OnConfigsExecuted()
 
 stock void ForwardValues() 
 {
-	g_fAdvertInterval = GetConVarFloat(g_cvAdvertInterval);
-	g_iGameID = GetConVarInt(g_cvGameID);
-	g_fRefreshInterval = GetConVarFloat(g_cvRefreshInterval);
-	g_iLocationID = GetConVarInt(g_cvLocationID);
 	GetConVarString(g_cvTableName, g_sTableName, sizeof(g_sTableName));
 	GetConVarString(g_cvGameTableName, g_sGameTableName, sizeof(g_sGameTableName));
-	g_bAdvanceDebug = GetConVarBool(g_cvAdvanceDebug);
-	g_bDisableOffline = GetConVarBool(g_cvDisableOffline);
-	g_bDisableCurrent = GetConVarBool(g_cvDisableCurrent);
-	g_iDBPriority = GetConVarInt(g_cvDBPriority);
-	g_bCreateDBTable = GetConVarBool(g_cvCreateDBTable);
-	g_bNewServerAnnounce = GetConVarBool(g_cvNewServerAnnounce);
-	g_iNewAnnounceServerMethod = GetConVarBool(g_cvNewServerAnnounceMethod);
-	g_bUseSocket = GetConVarBool(g_cvUseSocket);
-	g_bGameAbbreviations = GetConVarBool(g_cvGameAbbreviations);
 	GetConVarString(g_cvIPAddress, g_sIPAddress, sizeof(g_sIPAddress));
-	
-	if (g_iDBPriority == 0)
-	{
-		// High.
-		dbPriority = DBPrio_High;
-		
-		if (g_bAdvanceDebug)
-		{
-			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to high.");
-		}
-	}
-	else if (g_iDBPriority == 1)
-	{
-		// Normal.
-		dbPriority = DBPrio_Normal;
-		
-		if (g_bAdvanceDebug)
-		{
-			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to normal.");
-		}
-	}
-	else if (g_iDBPriority == 2)
-	{
-		// Low.
-		dbPriority = DBPrio_Low;
-		
-		if (g_bAdvanceDebug)
-		{
-			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to low.");
-		}
-	}
-	else
-	{
-		// Normal.
-		dbPriority = DBPrio_Normal;
-		
-		if (g_bAdvanceDebug)
-		{
-			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] ForwardValues() :: DataBase priority set to normal. (value not valid)");
-		}
-	}
 }
 
 public int GFLMySQL_OnDatabaseConnected(Handle hDB) 
@@ -352,7 +303,7 @@ public int GFLMySQL_OnDatabaseConnected(Handle hDB)
 			g_bEnabled = true;
 		}
 		
-		if (g_bCreateDBTable)
+		if (g_cvCreateDBTable.BoolValue)
 		{
 			CreateSQLTables();
 		}
@@ -372,11 +323,11 @@ public int GFLMySQL_OnDatabaseConnected(Handle hDB)
 		delete g_hAdvertTimer;
 	}
 	
-	g_hAdvertTimer = CreateTimer(g_fAdvertInterval, Timer_Advert, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	g_hAdvertTimer = CreateTimer(g_cvAdvertInterval.FloatValue, Timer_Advert, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 	
 	if (g_hRefreshTimer == null)
 	{
-		g_hRefreshTimer = CreateTimer(g_fRefreshInterval, Timer_Refresh, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+		g_hRefreshTimer = CreateTimer(g_cvRefreshInterval.FloatValue, Timer_Refresh, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 	}
 }
 
@@ -421,10 +372,10 @@ stock void SetUpServers()
 	// Let's build the location WHERE.
 	char sLoc[64];
 	
-	if (g_iLocationID > 0)
+	if (g_cvLocationID.IntValue > 0)
 	{
 		// Specific location.
-		Format(sLoc, sizeof(sLoc), "`location`=%i", g_iLocationID);
+		Format(sLoc, sizeof(sLoc), "`location`=%i", g_cvLocationID.IntValue);
 	}
 	else
 	{
@@ -435,10 +386,10 @@ stock void SetUpServers()
 	// Let's build the game ID WHERE.
 	char sGame[64];
 	
-	if (g_iGameID > 0)
+	if (g_cvGameID.IntValue > 0)
 	{
 		// Specific game.
-		Format(sGame, sizeof(sGame), "`gameid`=%i", g_iGameID);
+		Format(sGame, sizeof(sGame), "`gameid`=%i", g_cvGameID.IntValue);
 	}
 	else
 	{
@@ -449,7 +400,7 @@ stock void SetUpServers()
 	// Format the query.
 	Format(sQuery, sizeof(sQuery), "SELECT * FROM `%s` WHERE %s AND %s", g_sTableName, sLoc, sGame);
 	
-	if (g_bAdvanceDebug)
+	if (g_cvAdvanceDebug.BoolValue)
 	{
 		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] SetUpServers() :: Server Query: %s", sQuery);
 	}
@@ -466,7 +417,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 		int iCount = 0;
 		int iRowCount = SQL_GetRowCount(hHndl);
 		
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{	
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Received %d row(s).", iRowCount);
 		}
@@ -479,13 +430,13 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				continue;
 			}
 			
-			if (g_bDisableOffline) 
+			if (g_cvDisableOffline.BoolValue) 
 			{
 				int iMaxP = SQL_FetchInt(hHndl, 10);
 				
 				if (iMaxP < 1) 
 				{
-					if (g_bAdvanceDebug) 
+					if (g_cvAdvanceDebug.BoolValue) 
 					{
 						char sCurIP[32];
 						SQL_FetchString(hHndl, 4, sCurIP, sizeof(sCurIP));
@@ -497,7 +448,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				}
 			}
 			
-			if (g_bDisableCurrent) 
+			if (g_cvDisableCurrent.BoolValue) 
 			{
 				char sServerIP[64];
 				SQL_FetchString(hHndl, 4, sServerIP, sizeof(sServerIP));
@@ -506,7 +457,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				
 				if (StrEqual(sServerIP, g_sServerIP, false) && iServerPort == g_iServerPort) 
 				{
-					if (g_bAdvanceDebug) 
+					if (g_cvAdvanceDebug.BoolValue) 
 					{
 						GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Skipped %s:%d due to it matching the current server.", sServerIP, iServerPort);
 					}
@@ -526,7 +477,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 			g_arrServers[iCount].iNew = SQL_FetchInt(hHndl, 16);
 			
 			// Check if the socket convar is enabled & if the socket extension is enabled.
-			if (g_bUseSocket && g_bSocketEnabled)
+			if (g_cvUseSocket.BoolValue && g_bSocketEnabled)
 			{				
 				// Create the socket.
 				Handle hSocket = SocketCreate(SOCKET_UDP, Socket_OnError);
@@ -547,7 +498,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				SQL_FetchString(hHndl, 12, g_arrServers[iCount].sCurMap, MAX_NAME_LENGTH);
 			}
 			
-			if (g_bAdvanceDebug) 
+			if (g_cvAdvanceDebug.BoolValue) 
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Loading: %s (%i), currently %i/%i (%i). IP: %s:%i (%s:%i) on map: %s also in location %i with the game id being %i", g_arrServers[iCount].sName, g_arrServers[iCount].iServerID, g_arrServers[iCount].iPlayerCount, g_arrServers[iCount].iMaxPlayers, g_arrServers[iCount].iBots, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sIP, g_arrServers[iCount].iPort, g_arrServers[iCount].sCurMap, g_arrServers[iCount].iLocationID, g_arrServers[iCount].iGameID);
 			}
@@ -575,7 +526,7 @@ stock void SetUpGames()
 	
 	Format(sQuery, sizeof(sQuery), "SELECT * FROM `%s`", g_sGameTableName);
 	
-	if (g_bAdvanceDebug)
+	if (g_cvAdvanceDebug.BoolValue)
 	{
 		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] SetUpGames() :: Game Query: %s", sQuery);
 	}
@@ -592,7 +543,7 @@ public void CallBack_GameTQuery(Handle hOwner, Handle hHndl, const char[] sErr, 
 		int iCount = 0;
 		int iRowCount = SQL_GetRowCount(hHndl);
 		
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{	
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_GameTQuery() :: Received %d row(s).", iRowCount);
 		}
@@ -612,7 +563,7 @@ public void CallBack_GameTQuery(Handle hOwner, Handle hHndl, const char[] sErr, 
 			SQL_FetchString(hHndl, 3, g_arrGames[iCount].sAbr, MAX_NAME_LENGTH);
 			SQL_FetchString(hHndl, 4, g_arrGames[iCount].sCode, MAX_NAME_LENGTH);
 			
-			if (g_bAdvanceDebug) 
+			if (g_cvAdvanceDebug.BoolValue) 
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_GameTQuery() :: Loading: %s (%i), Special: %i, Abbreviation: %s, Code Name: %s", g_arrGames[iCount].sName, g_arrGames[iCount].iGameID, g_arrGames[iCount].iSpecial, g_arrGames[iCount].sAbr, g_arrGames[iCount].sCode);
 			}
@@ -631,26 +582,26 @@ public void CallBack_GameTQuery(Handle hOwner, Handle hHndl, const char[] sErr, 
 public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroadcast)
 {
 	// Check whether the ConVar is enabled and if we have servers.
-	if (g_bNewServerAnnounce && g_iMaxServers > 0)
+	if (g_cvNewServerAnnounce.BoolValue && g_iMaxServers > 0)
 	{
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
 			GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: New Server Announce enabled...");
 		}
 		
 		// Check the method used.
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
-			GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Method used: %i...", g_iNewAnnounceServerMethod);
+			GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Method used: %i...", g_cvNewServerAnnounceMethod.IntValue);
 		}
 		
-		if (g_iNewAnnounceServerMethod == 0)
+		if (g_cvNewServerAnnounceMethod.IntValue == 0)
 		{
 			bool bFound = false;
 			int iCount = GetRandomInt(0, (g_iMaxServers - 1));
 			int iAttempts = 0;
 			
-			if (g_bAdvanceDebug)
+			if (g_cvAdvanceDebug.BoolValue)
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Starting while loop. (iCount = %i)...", iCount);
 			}
@@ -661,7 +612,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				// Check whether it's a new server or not.
 				if (g_arrServers[iCount].iNew > 0)
 				{
-					if (g_bAdvanceDebug)
+					if (g_cvAdvanceDebug.BoolValue)
 					{
 						GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Found a new server. (ID: %i)...", iCount);
 					}
@@ -679,7 +630,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				// Check how many attempts, if it's above the server count, break the entire loop.
 				if (iAttempts > g_iMaxServers)
 				{
-					if (g_bAdvanceDebug)
+					if (g_cvAdvanceDebug.BoolValue)
 					{
 						GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: iAttempts > g_iMaxServers. Breaking loop...");
 					}
@@ -689,7 +640,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				// Check the count.
 				if (iCount > (g_iMaxServers - 1))
 				{
-					if (g_bAdvanceDebug)
+					if (g_cvAdvanceDebug.BoolValue)
 					{
 						GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: iCount > (g_iMaxServers - 1). Resetting iCount to 0...");
 					}
@@ -697,7 +648,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 					iCount = 0;
 				}
 				
-				if (g_bAdvanceDebug)
+				if (g_cvAdvanceDebug.BoolValue)
 				{
 					GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Looping again...");
 				}
@@ -725,7 +676,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 					continue;
 				}
 				
-				if (g_bAdvanceDebug)
+				if (g_cvAdvanceDebug.BoolValue)
 				{
 					GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Looping through client #%i (%N)...", i, i);
 				}
@@ -734,7 +685,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 				int iCount = GetRandomInt(0, (g_iMaxServers - 1));
 				int iAttempts = 0;
 				
-				if (g_bAdvanceDebug)
+				if (g_cvAdvanceDebug.BoolValue)
 				{
 					GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Starting while loop. (iCount = %i)...", iCount);
 				}
@@ -745,7 +696,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 					// Check whether it's a new server or not.
 					if (g_arrServers[iCount].iNew > 0)
 					{
-						if (g_bAdvanceDebug)
+						if (g_cvAdvanceDebug.BoolValue)
 						{
 							GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Found a new server. (ID: %i)...", iCount);
 						}
@@ -763,7 +714,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 					// Check how many attempts, if it's above the server count, break the entire loop.
 					if (iAttempts > g_iMaxServers)
 					{
-						if (g_bAdvanceDebug)
+						if (g_cvAdvanceDebug.BoolValue)
 						{
 							GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: iAttempts > g_iMaxServers. Breaking loop...");
 						}
@@ -773,7 +724,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 					// Check the count.
 					if (iCount > (g_iMaxServers - 1))
 					{
-						if (g_bAdvanceDebug)
+						if (g_cvAdvanceDebug.BoolValue)
 						{
 							GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: iCount > (g_iMaxServers - 1). Resetting iCount to 0...");
 						}
@@ -781,7 +732,7 @@ public Action Event_RoundStart(Event eEvent, const char[] sEName, bool bDontBroa
 						iCount = 0;
 					}
 					
-					if (g_bAdvanceDebug)
+					if (g_cvAdvanceDebug.BoolValue)
 					{
 						GFLCore_LogMessage("serverhop-debug.log", "Event_RoundStart() :: Looping again...");
 					}
@@ -953,7 +904,7 @@ public void Callback_AddServer(Handle hOwner, Handle hHndl, const char[] sErr, D
 			Format(sQuery, sizeof(sQuery), "UPDATE `%s` SET `name`='%s', `description`='%s', `ip`='%s', `location`=%d, `gameid`=%d WHERE `publicip`='%s' AND `port`=%d", g_sTableName, escName, escDesc, escPublicIP, iiLocationID, iiGameID, g_sServerIP, g_iServerPort);
 		}
 		
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Callback_AddServer() :: sQuery = %s", sQuery);
 		}
@@ -1042,12 +993,12 @@ public Action Timer_Advert(Handle hTimer)
 		return;
 	}
 	
-	if (g_bDisableOffline && g_arrServers[g_iRotate].iMaxPlayers < 1) 
+	if (g_cvDisableOffline.BoolValue && g_arrServers[g_iRotate].iMaxPlayers < 1) 
 	{
 		// Find the next online server.
 		for (int i = g_iRotate; i < g_iMaxServers; i++)
 		{
-			if (g_bAdvanceDebug) 
+			if (g_cvAdvanceDebug.BoolValue) 
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s due to being offline (0 maximum players).", g_arrServers[g_iRotate].sIP);
 			}
@@ -1061,13 +1012,13 @@ public Action Timer_Advert(Handle hTimer)
 		}
 	}
 	
-	if (g_bDisableCurrent) 
+	if (g_cvDisableCurrent.BoolValue) 
 	{
 		if (StrEqual(g_arrServers[g_iRotate].sIP, g_sServerIP, false) && g_arrServers[g_iRotate].iPort == g_iServerPort) 
 		{
 			MoveUpServer();
 			
-			if (g_bAdvanceDebug) 
+			if (g_cvAdvanceDebug.BoolValue) 
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s:%d due to it matching the current server.", g_arrServers[g_iRotate].sIP, g_arrServers[g_iRotate].iPort);
 			}
@@ -1080,7 +1031,7 @@ public Action Timer_Advert(Handle hTimer)
 	char sAbbr[MAX_NAME_LENGTH];
 	strcopy(sAbbr, sizeof(sAbbr), "");
 	
-	if (g_bGameAbbreviations)
+	if (g_cvGameAbbreviations.BoolValue)
 	{
 		int iGame = FindGameID(g_arrServers[g_iRotate].iGameID);
 		
@@ -1107,7 +1058,7 @@ public Action Timer_Advert(Handle hTimer)
 		CPrintToChat(iClient, sMsg);
 	}
 	
-	if (g_bAdvanceDebug) 
+	if (g_cvAdvanceDebug.BoolValue) 
 	{
 		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server Advert: %s (%i)(%i)", g_arrServers[g_iRotate].sName, g_arrServers[g_iRotate].iServerID, g_iRotate);
 	}
@@ -1331,7 +1282,7 @@ public void Callback_TableCheck(Handle hOwner, Handle hHndl, const char[] sErr, 
 		char sQuery[2048];
 		Format(sQuery, sizeof(sQuery), "CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) NOT NULL AUTO_INCREMENT, `name` varchar(1024) NOT NULL,`location` int(255) NOT NULL,`ip` varchar(1024) NOT NULL,`publicip` varchar(1024) NOT NULL,`port` int(11) NOT NULL,`qport` int(11) NOT NULL,`description` varchar(1024) NOT NULL,`gameid` int(11) NOT NULL,`players` int(11) NOT NULL,`playersmax` int(11) NOT NULL,`bots` int(11) NOT NULL,`map` varchar(1024) NOT NULL,`order` int(11) NOT NULL,`password` varchar(1024) NOT NULL, `lastupdated` int(11) NOT NULL, `new` int(1) NOT NULL, PRIMARY KEY (`id`)) ENGINE=MyISAM  DEFAULT CHARSET=latin1;", g_sTableName);
 		
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Callback_TableCheck() :: Create Table Query: %s", sQuery);
 		}
@@ -1344,14 +1295,14 @@ public void Callback_CreateTable(Handle hOwner, Handle hHndl, const char[] sErr,
 {
 	if (hHndl == null)
 	{
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Callback_CreateTable() :: Error creating the `%s` table. Error: %s", g_sTableName, sErr);
 		}
 	}
 	else
 	{
-		if (g_bAdvanceDebug)
+		if (g_cvAdvanceDebug.BoolValue)
 		{
 			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Callback_CreateTable() :: `%s` table created successfully!", g_sTableName);
 		}
