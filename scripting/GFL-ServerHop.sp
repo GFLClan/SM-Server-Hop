@@ -1211,6 +1211,7 @@ stock void DisplayServerInfo(int iClient, int i)
 	Format(sPublicIP, sizeof(sPublicIP), "%t", "MenuPublicIP", g_arrServers[i].sPubIP, g_arrServers[i].iPort);
 	Format(sRealIP, sizeof(sRealIP), "%t", "MenuRealIP", g_arrServers[i].sIP, g_arrServers[i].iPort);
 	Format(sMapName, sizeof(sMapName), "%t", "MenuMap", g_arrServers[i].sCurMap);
+
 	if (g_arrServers[i].iNew > 0)
 	{
 		Format(sNew, sizeof(sNew), "%t: Yes", "MenuNew");
@@ -1219,6 +1220,7 @@ stock void DisplayServerInfo(int iClient, int i)
 	{
 		Format(sNew, sizeof(sNew), "%t: No", "MenuNew");
 	}
+
 	Format(sFullMenu, sizeof(sFullMenu), "%s\n%s\n%s\n%s\n%s\n%s", sFullName, sPlayerCount, sPublicIP, sRealIP, sMapName, sNew);
 	
 	Handle hMenu = CreateMenu(ServerInfoMenuCallback);
@@ -1351,7 +1353,7 @@ public int Socket_OnReceived(Handle hSock, char[] sReceiveData, const int iDataS
 	char sGameDir[MAX_STR_LEN];
 	char sGameDesc[MAX_STR_LEN];
 
-	// Get the server information.
+	// Get the server information (parsing the A2S_INFO response => https://developer.valvesoftware.com/wiki/Server_queries#Response_Format).
 	int iOffset = 2;
 	sSrvName = GetString(sReceiveData, iDataSize, iOffset);
 	iOffset += strlen(sSrvName) + 1;
