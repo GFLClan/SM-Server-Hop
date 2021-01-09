@@ -34,7 +34,6 @@ enum struct Servers
 	int iBots;
 	char sCurMap[MAX_STR_LEN];
 	int iNew;
-	Handle hSocket;
 }
 
 enum struct Games 
@@ -528,19 +527,16 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 			
 			// Check if the socket convar is enabled & if the socket extension is enabled.
 			if (g_bUseSocket && g_bSocketEnabled)
-			{
-				// Check to see if the socket exist.
-				if (g_arrServers[iCount].hSocket != null)
-				{
-					// Close it.
-					delete g_arrServers[iCount].hSocket;
-				}
-				
+			{				
 				// Create the socket.
-				g_arrServers[iCount].hSocket = SocketCreate(SOCKET_UDP, Socket_OnError);
-				SocketSetOption(g_arrServers[iCount].hSocket, SocketReceiveTimeout, g_hSocketTimeout.IntValue);
-				SocketSetArg(g_arrServers[iCount].hSocket, iCount);
-				SocketConnect(g_arrServers[iCount].hSocket, Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort);
+				Handle hSocket = SocketCreate(SOCKET_UDP, Socket_OnError);
+
+				if (hSocket != null)
+				{
+					SocketSetOption(hSocket, SocketReceiveTimeout, g_hSocketTimeout.IntValue);
+					SocketSetArg(hSocket, iCount);
+					SocketConnect(hSocket, Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort);
+				}
 			}
 			else
 			{
@@ -1159,7 +1155,6 @@ stock void ResetServersArray()
 		g_arrServers[i].iBots = -1;
 		strcopy(g_arrServers[i].sCurMap, MAX_NAME_LENGTH, "");
 		g_arrServers[i].iNew = -1;
-		g_arrServers[i].hSocket = null;
 	}
 }
 
