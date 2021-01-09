@@ -1130,6 +1130,7 @@ stock void RetrieveServerIP()
 		int iLongIP = GetConVarInt(FindConVar("hostip"));
 		g_iServerPort = GetConVarInt(FindConVar("hostport"));
 		
+		// Since the IP is in network byte order and there's not a way to specify certain integer sizes, we shift from the last bits (8 bits each) and also do bitwise AND of '0x000000FF' (255 in decimal and 11111111 in binary) to make it a total of 8 bits (1 byte).
 		iPieces[0] = (iLongIP >> 24) & 0x000000FF;
 		iPieces[1] = (iLongIP >> 16) & 0x000000FF;
 		iPieces[2] = (iLongIP >> 8) & 0x000000FF;
