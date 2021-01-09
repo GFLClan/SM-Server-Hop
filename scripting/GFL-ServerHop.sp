@@ -65,23 +65,23 @@ Handle g_hOnServersUpdated;
 Handle g_hOnGamesUpdated;
 
 // ConVars
-ConVar g_hAdvertInterval = null;
-ConVar g_hGameID = null;
-ConVar g_hRefreshInterval = null;
-ConVar g_hLocationID = null;
-ConVar g_hTableName = null;
-ConVar g_hGameTableName = null;
-ConVar g_hAdvanceDebug = null;
-ConVar g_hDisableOffline = null;
-ConVar g_hDisableCurrent = null;
-ConVar g_hDBPriority = null;
-ConVar g_hCreateDBTable = null;
-ConVar g_hNewServerAnnounce = null;
-ConVar g_hNewServerAnnounceMethod = null;
-ConVar g_hUseSocket = null;
-ConVar g_hGameAbbreviations = null;
-ConVar g_hIPAddress = null;
-ConVar g_hSocketTimeout = null;
+ConVar g_cvAdvertInterval = null;
+ConVar g_cvGameID = null;
+ConVar g_cvRefreshInterval = null;
+ConVar g_cvLocationID = null;
+ConVar g_cvTableName = null;
+ConVar g_cvGameTableName = null;
+ConVar g_cvAdvanceDebug = null;
+ConVar g_cvDisableOffline = null;
+ConVar g_cvDisableCurrent = null;
+ConVar g_cvDBPriority = null;
+ConVar g_cvCreateDBTable = null;
+ConVar g_cvNewServerAnnounce = null;
+ConVar g_cvNewServerAnnounceMethod = null;
+ConVar g_cvUseSocket = null;
+ConVar g_cvGameAbbreviations = null;
+ConVar g_cvIPAddress = null;
+ConVar g_cvSocketTimeout = null;
 
 // ConVar Values
 float g_fAdvertInterval;
@@ -182,56 +182,56 @@ stock void Forwards()
 
 stock void ForwardConVars() 
 {	
-	g_hAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
-	HookConVarChange(g_hAdvertInterval, CVarChanged);
+	g_cvAdvertInterval = CreateConVar("sm_gflsh_advert_interval", "65.0", "Every x seconds display a server advertisement.");
+	HookConVarChange(g_cvAdvertInterval, CVarChanged);
 	
-	g_hGameID = CreateConVar("sm_gflsh_gameid", "0", "The Game ID of the servers you want to retrieve in the database. 0 = All");
-	HookConVarChange(g_hGameID, CVarChanged);	
+	g_cvGameID = CreateConVar("sm_gflsh_gameid", "0", "The Game ID of the servers you want to retrieve in the database. 0 = All");
+	HookConVarChange(g_cvGameID, CVarChanged);	
 	
-	g_hRefreshInterval = CreateConVar("sm_gflsh_refresh_interval", "500.0", "Every x seconds refresh the server list.");
-	HookConVarChange(g_hRefreshInterval, CVarChanged);
+	g_cvRefreshInterval = CreateConVar("sm_gflsh_refresh_interval", "500.0", "Every x seconds refresh the server list.");
+	HookConVarChange(g_cvRefreshInterval, CVarChanged);
 	
-	g_hLocationID = CreateConVar("sm_gflsh_locationid", "0", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
-	HookConVarChange(g_hLocationID, CVarChanged);
+	g_cvLocationID = CreateConVar("sm_gflsh_locationid", "0", "Server's location ID. 0 = All, 1 = US, 2 = EU, etc..");
+	HookConVarChange(g_cvLocationID, CVarChanged);
 	
-	g_hTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");
-	HookConVarChange(g_hTableName, CVarChanged);		
+	g_cvTableName = CreateConVar("sm_gflsh_tablename", "gfl_serverlist", "The table to select the servers from.");
+	HookConVarChange(g_cvTableName, CVarChanged);		
 	
-	g_hGameTableName = CreateConVar("sm_gflsh_gametablename", "gfl_gamelist", "The table to select the games from.");
-	HookConVarChange(g_hGameTableName, CVarChanged);	
+	g_cvGameTableName = CreateConVar("sm_gflsh_gametablename", "gfl_gamelist", "The table to select the games from.");
+	HookConVarChange(g_cvGameTableName, CVarChanged);	
 	
-	g_hAdvanceDebug = CreateConVar("sm_gflsh_advancedebug", "0", "Enable advanced debugging for this plugin?");
-	HookConVarChange(g_hAdvanceDebug, CVarChanged);	
+	g_cvAdvanceDebug = CreateConVar("sm_gflsh_advancedebug", "0", "Enable advanced debugging for this plugin?");
+	HookConVarChange(g_cvAdvanceDebug, CVarChanged);	
 	
-	g_hDisableOffline = CreateConVar("sm_gflsh_disableoffline", "1", "1 = Don't include offline servers in the advertisements (0 player count).");
-	HookConVarChange(g_hDisableOffline, CVarChanged);
+	g_cvDisableOffline = CreateConVar("sm_gflsh_disableoffline", "1", "1 = Don't include offline servers in the advertisements (0 player count).");
+	HookConVarChange(g_cvDisableOffline, CVarChanged);
 	
-	g_hDisableCurrent = CreateConVar("sm_gflsh_disablecurrent", "1", "1 = Disable the current server from showing in the advertisement list?");
-	HookConVarChange(g_hDisableCurrent, CVarChanged);	
+	g_cvDisableCurrent = CreateConVar("sm_gflsh_disablecurrent", "1", "1 = Disable the current server from showing in the advertisement list?");
+	HookConVarChange(g_cvDisableCurrent, CVarChanged);	
 	
-	g_hDBPriority = CreateConVar("sm_gflsh_db_priority", "1", "The priority of queries for the plugin.");
-	HookConVarChange(g_hDBPriority, CVarChanged);	
+	g_cvDBPriority = CreateConVar("sm_gflsh_db_priority", "1", "The priority of queries for the plugin.");
+	HookConVarChange(g_cvDBPriority, CVarChanged);	
 	
-	g_hCreateDBTable = CreateConVar("sm_gflsh_db_createtable", "0", "Attempt to create the table needed for this plugin if it doesn't exist.");
-	HookConVarChange(g_hCreateDBTable, CVarChanged);	
+	g_cvCreateDBTable = CreateConVar("sm_gflsh_db_createtable", "0", "Attempt to create the table needed for this plugin if it doesn't exist.");
+	HookConVarChange(g_cvCreateDBTable, CVarChanged);	
 	
-	g_hNewServerAnnounce = CreateConVar("sm_gflsh_new_server_announce", "0", "Announces new servers one round start.");
-	HookConVarChange(g_hNewServerAnnounce, CVarChanged);	
+	g_cvNewServerAnnounce = CreateConVar("sm_gflsh_new_server_announce", "0", "Announces new servers one round start.");
+	HookConVarChange(g_cvNewServerAnnounce, CVarChanged);	
 	
-	g_hUseSocket = CreateConVar("sm_gflsh_use_socket", "1", "Uses socket to request server information instead of MySQL. This requires the socket extension.");
-	HookConVarChange(g_hUseSocket, CVarChanged);	
+	g_cvUseSocket = CreateConVar("sm_gflsh_use_socket", "1", "Uses socket to request server information instead of MySQL. This requires the socket extension.");
+	HookConVarChange(g_cvUseSocket, CVarChanged);	
 
-	g_hGameAbbreviations = CreateConVar("sm_gflsh_abbr", "1", "Use the game abbreviation infront of server advertisements.");
-	HookConVarChange(g_hGameAbbreviations, CVarChanged);	
+	g_cvGameAbbreviations = CreateConVar("sm_gflsh_abbr", "1", "Use the game abbreviation infront of server advertisements.");
+	HookConVarChange(g_cvGameAbbreviations, CVarChanged);	
 	
-	g_hNewServerAnnounceMethod = CreateConVar("sm_gflsh_new_server_announce_method", "0", "Method to use on round start (0 = Do it all in one with PrintToChatAll, 1 = Loop through all clients). 0 = Better performance but less randomization, 1 = Worse performance but each client will get a different new server each time (more randomized).");
-	HookConVarChange(g_hNewServerAnnounceMethod, CVarChanged);	
+	g_cvNewServerAnnounceMethod = CreateConVar("sm_gflsh_new_server_announce_method", "0", "Method to use on round start (0 = Do it all in one with PrintToChatAll, 1 = Loop through all clients). 0 = Better performance but less randomization, 1 = Worse performance but each client will get a different new server each time (more randomized).");
+	HookConVarChange(g_cvNewServerAnnounceMethod, CVarChanged);	
 	
-	g_hIPAddress = CreateConVar("sm_gflsh_server_ip", "", "If the plugin fails to get the current server's public IP due to something like a specific NAT configuration, just use this to set the public IP. Leave blank to let plugin assume what the public IP address is.");
-	HookConVarChange(g_hIPAddress, CVarChanged);
+	g_cvIPAddress = CreateConVar("sm_gflsh_server_ip", "", "If the plugin fails to get the current server's public IP due to something like a specific NAT configuration, just use this to set the public IP. Leave blank to let plugin assume what the public IP address is.");
+	HookConVarChange(g_cvIPAddress, CVarChanged);
 
 	// 1-5-20, I'm starting to use IntValue(), so no need for HookConVarChange.
-	g_hSocketTimeout = CreateConVar("sm_gflsh_socket_timeout", "60", "The timeout for each socket. 0 will set no timeout which will keep socket handles open.");
+	g_cvSocketTimeout = CreateConVar("sm_gflsh_socket_timeout", "60", "The timeout for each socket. 0 will set no timeout which will keep socket handles open.");
 	
 	AutoExecConfig(true, "GFL-ServerHop");
 }
@@ -240,7 +240,7 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 {
 	ForwardValues();
 	
-	if (hCVar == g_hAdvertInterval) 
+	if (hCVar == g_cvAdvertInterval) 
 	{
 		if (g_hAdvertTimer != null) 
 		{
@@ -249,7 +249,7 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 			g_hAdvertTimer = CreateTimer(StringToFloat(NewV), Timer_Advert, _, TIMER_REPEAT);
 		}
 	} 
-	else if (hCVar == g_hRefreshInterval) 
+	else if (hCVar == g_cvRefreshInterval) 
 	{
 		if (g_hRefreshTimer != null) 
 		{
@@ -282,22 +282,22 @@ public void OnConfigsExecuted()
 
 stock void ForwardValues() 
 {
-	g_fAdvertInterval = GetConVarFloat(g_hAdvertInterval);
-	g_iGameID = GetConVarInt(g_hGameID);
-	g_fRefreshInterval = GetConVarFloat(g_hRefreshInterval);
-	g_iLocationID = GetConVarInt(g_hLocationID);
-	GetConVarString(g_hTableName, g_sTableName, sizeof(g_sTableName));
-	GetConVarString(g_hGameTableName, g_sGameTableName, sizeof(g_sGameTableName));
-	g_bAdvanceDebug = GetConVarBool(g_hAdvanceDebug);
-	g_bDisableOffline = GetConVarBool(g_hDisableOffline);
-	g_bDisableCurrent = GetConVarBool(g_hDisableCurrent);
-	g_iDBPriority = GetConVarInt(g_hDBPriority);
-	g_bCreateDBTable = GetConVarBool(g_hCreateDBTable);
-	g_bNewServerAnnounce = GetConVarBool(g_hNewServerAnnounce);
-	g_iNewAnnounceServerMethod = GetConVarBool(g_hNewServerAnnounceMethod);
-	g_bUseSocket = GetConVarBool(g_hUseSocket);
-	g_bGameAbbreviations = GetConVarBool(g_hGameAbbreviations);
-	GetConVarString(g_hIPAddress, g_sIPAddress, sizeof(g_sIPAddress));
+	g_fAdvertInterval = GetConVarFloat(g_cvAdvertInterval);
+	g_iGameID = GetConVarInt(g_cvGameID);
+	g_fRefreshInterval = GetConVarFloat(g_cvRefreshInterval);
+	g_iLocationID = GetConVarInt(g_cvLocationID);
+	GetConVarString(g_cvTableName, g_sTableName, sizeof(g_sTableName));
+	GetConVarString(g_cvGameTableName, g_sGameTableName, sizeof(g_sGameTableName));
+	g_bAdvanceDebug = GetConVarBool(g_cvAdvanceDebug);
+	g_bDisableOffline = GetConVarBool(g_cvDisableOffline);
+	g_bDisableCurrent = GetConVarBool(g_cvDisableCurrent);
+	g_iDBPriority = GetConVarInt(g_cvDBPriority);
+	g_bCreateDBTable = GetConVarBool(g_cvCreateDBTable);
+	g_bNewServerAnnounce = GetConVarBool(g_cvNewServerAnnounce);
+	g_iNewAnnounceServerMethod = GetConVarBool(g_cvNewServerAnnounceMethod);
+	g_bUseSocket = GetConVarBool(g_cvUseSocket);
+	g_bGameAbbreviations = GetConVarBool(g_cvGameAbbreviations);
+	GetConVarString(g_cvIPAddress, g_sIPAddress, sizeof(g_sIPAddress));
 	
 	if (g_iDBPriority == 0)
 	{
@@ -533,7 +533,7 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 
 				if (hSocket != null)
 				{
-					SocketSetOption(hSocket, SocketReceiveTimeout, g_hSocketTimeout.IntValue);
+					SocketSetOption(hSocket, SocketReceiveTimeout, g_cvSocketTimeout.IntValue);
 					SocketSetArg(hSocket, iCount);
 					SocketConnect(hSocket, Socket_OnConnected, Socket_OnReceived, Socket_OnDisconnected, g_arrServers[iCount].sPubIP, g_arrServers[iCount].iPort);
 				}
