@@ -430,24 +430,6 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 				continue;
 			}
 			
-			if (g_cvDisableOffline.BoolValue) 
-			{
-				int iMaxP = SQL_FetchInt(hHndl, 10);
-				
-				if (iMaxP < 1) 
-				{
-					if (g_cvAdvanceDebug.BoolValue) 
-					{
-						char sCurIP[32];
-						SQL_FetchString(hHndl, 4, sCurIP, sizeof(sCurIP));
-						
-						GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] CallBack_ServerTQuery() :: Skipped %s due to the server being offline.", sCurIP);
-					}
-					
-					continue;
-				}
-			}
-			
 			if (g_cvDisableCurrent.BoolValue) 
 			{
 				char sServerIP[64];
