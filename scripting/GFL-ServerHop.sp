@@ -216,9 +216,10 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 		if (g_hRefreshTimer != null) 
 		{
 			delete g_hRefreshTimer;
-			
-			g_hRefreshTimer = CreateTimer(StringToFloat(NewV), Timer_Refresh, _, TIMER_REPEAT);
 		}
+		
+		g_hRefreshTimer = CreateTimer(StringToFloat(NewV), Timer_Refresh, _, TIMER_REPEAT);
+		
 	}
 }
 
