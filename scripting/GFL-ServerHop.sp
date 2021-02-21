@@ -210,9 +210,9 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 		if (g_hAdvertTimer != null) 
 		{
 			delete g_hAdvertTimer;
-			
-			g_hAdvertTimer = CreateTimer(StringToFloat(NewV), Timer_Advert, _, TIMER_REPEAT);
 		}
+
+		g_hAdvertTimer = CreateTimer(StringToFloat(NewV), Timer_Advert, _, TIMER_REPEAT);
 	} 
 	else if (hCVar == g_cvRefreshInterval) 
 	{
