@@ -27,7 +27,7 @@ enum struct Servers
 	char sName[MAX_NAME_LENGTH];
 	int iLocationID;
 	char sPubIP[MAX_NAME_LENGTH];
-	char sIP[11];
+	char sIP[MAX_NAME_LENGTH];
 	int iPort;
 	int iGameID;
 	int iPlayerCount;
