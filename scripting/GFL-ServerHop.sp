@@ -210,18 +210,18 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 		if (g_hAdvertTimer != null) 
 		{
 			delete g_hAdvertTimer;
-		}
 
-		g_hAdvertTimer = CreateTimer(StringToFloat(NewV), Timer_Advert, _, TIMER_REPEAT);
+			g_hAdvertTimer = CreateTimer(StringToFloat(NewV), Timer_Advert, _, TIMER_REPEAT);
+		}
 	} 
 	else if (hCVar == g_cvRefreshInterval) 
 	{
 		if (g_hRefreshTimer != null) 
 		{
 			delete g_hRefreshTimer;
-		}
 
-		g_hRefreshTimer = CreateTimer(StringToFloat(NewV), Timer_Refresh, _, TIMER_REPEAT);
+			g_hRefreshTimer = CreateTimer(StringToFloat(NewV), Timer_Refresh, _, TIMER_REPEAT);
+		}
 		
 	}
 }
@@ -328,11 +328,11 @@ public int GFLMySQL_OnDatabaseConnected(Handle hDB)
 		delete g_hAdvertTimer;
 	}
 	
-	g_hAdvertTimer = CreateTimer(g_cvAdvertInterval.FloatValue, Timer_Advert, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	g_hAdvertTimer = CreateTimer(g_cvAdvertInterval.FloatValue, Timer_Advert, _, TIMER_REPEAT);
 	
 	if (g_hRefreshTimer == null)
 	{
-		g_hRefreshTimer = CreateTimer(g_cvRefreshInterval.FloatValue, Timer_Refresh, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+		g_hRefreshTimer = CreateTimer(g_cvRefreshInterval.FloatValue, Timer_Refresh, _, TIMER_REPEAT);
 	}
 }
 
