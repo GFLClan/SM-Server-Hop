@@ -359,7 +359,7 @@ public void OnMapEnd()
 	
 	if (g_hRefreshTimer != null)
 	{
-		g_hRefreshTimer = null;
+		delete g_hRefreshTimer;
 	}
 }
 
