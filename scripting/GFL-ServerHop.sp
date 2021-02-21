@@ -453,8 +453,8 @@ public void CallBack_ServerTQuery(Handle hOwner, Handle hHndl, const char[] sErr
 			g_arrServers[iCount].iServerID = SQL_FetchInt(hHndl, 0);
 			SQL_FetchString(hHndl, 1, g_arrServers[iCount].sName, MAX_NAME_LENGTH);
 			g_arrServers[iCount].iLocationID = SQL_FetchInt(hHndl, 2);
-			SQL_FetchString(hHndl, 3, g_arrServers[iCount].sPubIP, MAX_NAME_LENGTH);
-			SQL_FetchString(hHndl, 4, g_arrServers[iCount].sIP, 32);
+			SQL_FetchString(hHndl, 3, g_arrServers[iCount].sIP, MAX_NAME_LENGTH);
+			SQL_FetchString(hHndl, 4, g_arrServers[iCount].sPubIP, 32);
 			g_arrServers[iCount].iPort = SQL_FetchInt(hHndl, 5);
 			g_arrServers[iCount].iGameID = SQL_FetchInt(hHndl, 8);
 			g_arrServers[iCount].iNew = SQL_FetchInt(hHndl, 16);
