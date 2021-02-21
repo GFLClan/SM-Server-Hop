@@ -15,6 +15,7 @@
 #define MAXGAMES 64
 #define UPDATE_URL "http://updater.gflclan.com/GFL-ServerHop.txt"
 #define PL_VERSION "1.0.1"
+#define MAXATTEMPTS 10
 
 /* Socket defines. */
 #define MAX_STR_LEN 160
@@ -957,55 +958,44 @@ public Action Command_PrintGames(int iClient, int iArgs)
 	return Plugin_Handled;
 }
 
-
-
-/* TIMERS */
-public Action Timer_Advert(Handle hTimer) 
+public bool PerformAdvert()
 {
-	if (!g_bEnabled)
-	{
-		return;
-	}
-	
 	if (!g_arrServers[g_iRotate].iServerID) 
 	{
-		GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server ID is lowered than one. Not continuing. Server name: %s", g_arrServers[g_iRotate].sName);
+		if (g_cvAdvanceDebug.BoolValue) 
+		{
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Server ID is lowered than one. Not continuing. Server name: %s", g_arrServers[g_iRotate].sName);
+		}
+
 		MoveUpServer();
-		
-		return;
+
+		return false;
 	}
 	
 	if (g_cvDisableOffline.BoolValue && g_arrServers[g_iRotate].iMaxPlayers < 1) 
 	{
-		// Find the next online server.
-		for (int i = g_iRotate; i < g_iMaxServers; i++)
+		if (g_cvAdvanceDebug.BoolValue) 
 		{
-			if (g_cvAdvanceDebug.BoolValue) 
-			{
-				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s due to being offline (0 maximum players).", g_arrServers[g_iRotate].sIP);
-			}
-		
-			MoveUpServer();
-			
-			if (g_arrServers[g_iRotate].iMaxPlayers > 0)
-			{
-				break;
-			}
+			GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s due to being offline (0 maximum players).", g_arrServers[g_iRotate].sIP);
 		}
+	
+		MoveUpServer();
+
+		return false;
 	}
 	
 	if (g_cvDisableCurrent.BoolValue) 
 	{
 		if (StrEqual(g_arrServers[g_iRotate].sIP, g_sServerIP, false) && g_arrServers[g_iRotate].iPort == g_iServerPort) 
 		{
-			MoveUpServer();
-			
 			if (g_cvAdvanceDebug.BoolValue) 
 			{
 				GFLCore_LogMessage("serverhop-debug.log", "[GFL-ServerHop] Timer_Advert() :: Skipped %s:%d due to it matching the current server.", g_arrServers[g_iRotate].sIP, g_arrServers[g_iRotate].iPort);
 			}
+
+			MoveUpServer();
 			
-			return;
+			return false;
 		}
 	}
 	
@@ -1049,6 +1039,27 @@ public Action Timer_Advert(Handle hTimer)
 	Call_Finish();
 	
 	MoveUpServer();
+
+	return true;
+}
+
+
+/* TIMERS */
+public Action Timer_Advert(Handle hTimer) 
+{
+	if (!g_bEnabled)
+	{
+		return;
+	}
+
+	// We're going to try performing the advertisement for MAXATTEMPTS. If MAXATTEMPTS exceeds, we stop to avoid infinite loop. When PerformAdvert() returns true (on successful advertisement), we break this loop immediately.
+	for (int i = 1; i <= MAXATTEMPTS; i++)
+	{
+		if (PerformAdvert())
+		{
+			break;
+		}
+	}
 }
 
 public Action Timer_Refresh(Handle hTimer) 
