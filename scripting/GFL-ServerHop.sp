@@ -193,6 +193,9 @@ stock void ForwardConVars()
 	HookConVarChange(g_cvGameTableName, CVarChanged);
 	HookConVarChange(g_cvIPAddress, CVarChanged);
 
+	HookConVarChange(g_cvAdvertInterval, CVarChanged);
+	HookConVarChange(g_cvRefreshInterval, CVarChanged);
+
 	HookConVarChange(g_cvDBPriority, DBChanged);
 
 	AutoExecConfig(true, "GFL-ServerHop");
@@ -217,7 +220,7 @@ public void CVarChanged(Handle hCVar, const char[] OldV, const char[] NewV)
 		{
 			delete g_hRefreshTimer;
 		}
-		
+
 		g_hRefreshTimer = CreateTimer(StringToFloat(NewV), Timer_Refresh, _, TIMER_REPEAT);
 		
 	}
